@@ -3,6 +3,8 @@ Welcome to acoPong!
 <br>
 It's a simple pong game where you control the left paddle with your cursor.
 <br>
+Or try the touch screen...
+<br>
 First to 5 wins! Good luck!
 <br>
 
@@ -66,6 +68,13 @@ window.onload = function() {
   }, 1000/framesPerSecond);
   
   canvas.addEventListener('mousemove',
+    function(evt) {
+      var mousePos = calcMousePos(evt);
+      leftPaddleMidY = mousePos.y;
+    }
+  );
+  
+  canvas.addEventListener('touchmove',
     function(evt) {
       var mousePos = calcMousePos(evt);
       leftPaddleMidY = mousePos.y;
@@ -168,8 +177,9 @@ function moveBall() {
   ballX += ballSpeedX;
   ballY += ballSpeedY;
   
-  // Enemy Side
+  // lawan
   if (ballX > canvas.width-PADDLE_THICKNESS) {
+    // batas paddle lawan
     var topLimit = rightPaddleMidY - (PADDLE_HEIGHT/2) - 3;
     var botLimit = rightPaddleMidY + (PADDLE_HEIGHT/2) + 3;
     
@@ -184,9 +194,9 @@ function moveBall() {
     }
   }
   
-  // Player Side
+  // player
   if (ballX < PADDLE_THICKNESS) {
-    // Check if ball hits pedal
+    // batas paddle player
     var topLimit = leftPaddleMidY - (PADDLE_HEIGHT/2) - 3;
     var botLimit = leftPaddleMidY + (PADDLE_HEIGHT/2) + 3;
     
