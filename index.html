@@ -1,0 +1,225 @@
+<html>
+Welcome to acoPong!
+<br>
+It's a simple pong game where you control the left paddle with your cursor.
+<br>
+First to 5 wins! Good luck!
+<br>
+
+<canvas id="gameCanvas" width="900" height="600">
+</canvas>
+
+<script>
+var canvas;
+var canvasContext;
+
+var ballX = 300;
+var ballSpeedX = 8;
+var ballY = 300
+var ballSpeedY = 0;
+
+var leftPaddleMidY = 250;
+const PADDLE_HEIGHT = 100;
+const PADDLE_THICKNESS = 10;
+
+var rightPaddleMidY = 250;
+
+var scoreLeft = 0;
+var scoreRight = 0;
+
+const SCORE_MAX = 5;
+
+var gamePause = true;
+var newGame = true;
+
+function calcMousePos(evt) {
+  var rect = canvas.getBoundingClientRect();
+  var root = document.documentElement;
+  var mouseX = evt.clientX - rect.left - root.scrollLeft;
+  var mouseY = evt.clientY - rect.top - root.scrollTop;
+  
+  return {
+    x:mouseX,
+    y:mouseY
+  };
+}
+
+function handleMouseClick(evt) {
+  if (gamePause) {
+    scoreLeft = 0;
+    scoreRight = 0;
+    gamePause = false;
+    newGame = false;
+  }
+}
+
+window.onload = function() {
+  console.log("code is running!");
+  canvas = document.getElementById('gameCanvas');
+  canvasContext = canvas.getContext('2d');
+  
+  var framesPerSecond = 60;
+  
+  setInterval(function() {
+    drawBlocks();
+    moveBall();
+  }, 1000/framesPerSecond);
+  
+  canvas.addEventListener('mousemove',
+    function(evt) {
+      var mousePos = calcMousePos(evt);
+      leftPaddleMidY = mousePos.y;
+    }
+  );
+  
+  canvas.addEventListener('mousedown', handleMouseClick);
+}
+
+function drawNet() {
+  for (var i = 30; i <= canvas.height; i += 30) {
+    colorRect((canvas.width/2)-1, i, 2, 10, 'white');
+  }
+}
+
+function drawBlocks() {
+  /* 
+  French Flag Background
+  canvasContext.fillStyle = 'blue';
+  canvasContext.fillRect(0,0,300,canvas.height);
+  canvasContext.fillStyle = 'white';
+  canvasContext.fillRect(300,0,300,canvas.height);
+  canvasContext.fillStyle = 'red';
+  canvasContext.fillRect(600,0,300,canvas.height);
+  */
+  
+  colorRect(0,0,canvas.width,canvas.height,'black');
+  
+  if (gamePause == true) {
+    if (!newGame) {
+      canvasContext.fillStyle = 'white';
+      
+      if (scoreLeft >= SCORE_MAX) {
+        canvasContext.fillText("Left player won!", 375, 275);
+      } else if (scoreRight >= SCORE_MAX) {
+        canvasContext.fillText("Right player won!", 375, 275);
+      }
+
+      canvasContext.fillText("Game finished! Click to play again.", 375, 300);
+      return;
+    } else {
+      canvasContext.fillStyle = 'white';
+      canvasContext.fillText("Welcome to acoPong! Click to play.", 375, 300);
+      return;
+    }
+  }
+  
+  drawNet();
+  
+  // Ball
+  // colorRect(ballX,290,20,20,'red');
+  colorCircle(ballX, ballY, 8, 'red');
+  
+  // Left Paddle
+  colorRect(0,leftPaddleMidY-(PADDLE_HEIGHT/2),PADDLE_THICKNESS,PADDLE_HEIGHT,'white');
+  
+  // Right Paddle
+  colorRect(canvas.width-10,rightPaddleMidY-(PADDLE_HEIGHT/2),PADDLE_THICKNESS,PADDLE_HEIGHT,'white');
+  
+  // Score
+  canvasContext.fillText(scoreLeft, 150, 150);
+  canvasContext.fillText(scoreRight, canvas.width-150, 150);
+  
+}
+
+function resetBall() {
+  if (scoreLeft >= SCORE_MAX || scoreRight >= SCORE_MAX) {
+    gamePause = true;
+  }
+  
+  ballX = canvas.width/2;
+  ballY = canvas.height/2;
+  
+  ballSpeedX = 8;
+  ballSpeedY = 0;
+}
+
+function compAI() {
+  var deltaY = ballY - rightPaddleMidY;
+  var value = 0;
+  
+  if (deltaY > 30 || deltaY < -30) {
+    value = 7;
+  } else {
+    value = 1;
+  }
+  
+  if (rightPaddleMidY < ballY) {
+    rightPaddleMidY += value;
+  } else {
+    rightPaddleMidY -= value;
+  }
+}
+
+function moveBall() {
+  if (gamePause == true) return;
+  
+  compAI();
+  
+  ballX += ballSpeedX;
+  ballY += ballSpeedY;
+  
+  // Enemy Side
+  if (ballX > canvas.width-PADDLE_THICKNESS) {
+    var topLimit = rightPaddleMidY - (PADDLE_HEIGHT/2) - 3;
+    var botLimit = rightPaddleMidY + (PADDLE_HEIGHT/2) + 3;
+    
+    if (ballY >= topLimit && ballY <= botLimit) {
+      ballSpeedX = -ballSpeedX;
+      
+      var deltaY = ballY - rightPaddleMidY;
+      ballSpeedY = deltaY * 0.25;
+    } else {
+      scoreLeft ++;
+      resetBall();  
+    }
+  }
+  
+  // Player Side
+  if (ballX < PADDLE_THICKNESS) {
+    // Check if ball hits pedal
+    var topLimit = leftPaddleMidY - (PADDLE_HEIGHT/2) - 3;
+    var botLimit = leftPaddleMidY + (PADDLE_HEIGHT/2) + 3;
+    
+    if (ballY >= topLimit && ballY <= botLimit) {
+      ballSpeedX = -ballSpeedX;
+      
+      var deltaY = ballY - leftPaddleMidY;
+      ballSpeedY = deltaY * 0.25;
+    } else {
+      scoreRight ++;
+      resetBall();
+    }
+  }
+  
+  if (ballY >= canvas.height) {
+    ballSpeedY = -ballSpeedY;
+  } else if (ballY <= 0) {
+    ballSpeedY = -ballSpeedY;
+  }
+}
+
+function colorRect(leftX, topY, width, height, drawColor) {
+  canvasContext.fillStyle = drawColor;
+  canvasContext.fillRect(leftX, topY, width, height);
+}
+
+function colorCircle(midX, midY, radi, drawColor) {
+  canvasContext.fillStyle = drawColor;
+  canvasContext.beginPath();
+  canvasContext.arc(midX, midY, radi, 0, Math.PI*2, true);
+  canvasContext.fill();
+}
+
+</script>
+
+</html>
